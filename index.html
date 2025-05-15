@@ -28,22 +28,27 @@
       width: 300px;
     }
     .button-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 0.5rem;
+      justify-items: center;
     }
     .card-button {
       background-color: #333;
       border: 1px solid #555;
       color: white;
-      padding: 0.5rem 1rem;
+      width: 60px;
+      height: 60px;
       border-radius: 5px;
       cursor: pointer;
       font-size: 1rem;
     }
     .card-button:hover {
       background-color: #555;
+    }
+    .card-button.selected {
+      background-color: #007acc;
+      border-color: #00bfff;
     }
     input, button {
       margin: 0.5rem 0;
@@ -78,6 +83,8 @@
       <div class="button-grid" id="countButtons"></div>
       <label>Decks Remaining:</label>
       <input type="number" id="decksRemaining" value="6" min="0.5" step="0.5">
+      <button onclick="resetCount()">Reset Count</button>
+      <button onclick="undoCount()">Undo Last Card</button>
       <div class="output" id="countOutput"></div>
     </div>
   </div>
@@ -86,6 +93,7 @@
     let runningCount = 0;
     let selectedPlayer = null;
     let selectedDealer = null;
+    let lastCard = null;
 
     const playerButtons = document.getElementById('playerButtons');
     const dealerButtons = document.getElementById('dealerButtons');
@@ -93,11 +101,22 @@
 
     const allCardValues = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A'];
 
+    function highlightSelected(group, value) {
+      const buttons = group.getElementsByClassName('card-button');
+      for (const btn of buttons) {
+        if (btn.innerText == value) btn.classList.add('selected');
+        else btn.classList.remove('selected');
+      }
+    }
+
     for (let i = 4; i <= 21; i++) {
       const btn = document.createElement('button');
       btn.innerText = i;
       btn.className = 'card-button';
-      btn.onclick = () => selectedPlayer = i;
+      btn.onclick = () => {
+        selectedPlayer = i;
+        highlightSelected(playerButtons, i);
+      };
       playerButtons.appendChild(btn);
     }
 
@@ -105,7 +124,10 @@
       const btn = document.createElement('button');
       btn.innerText = card;
       btn.className = 'card-button';
-      btn.onclick = () => selectedDealer = convertCardToValue(card);
+      btn.onclick = () => {
+        selectedDealer = convertCardToValue(card);
+        highlightSelected(dealerButtons, card);
+      };
       dealerButtons.appendChild(btn);
     });
 
@@ -145,10 +167,29 @@
     }
 
     function updateCountWithCard(card) {
-      runningCount += getHiLo(card);
+      const value = getHiLo(card);
+      runningCount += value;
+      lastCard = card;
+      updateCountOutput();
+    }
+
+    function resetCount() {
+      runningCount = 0;
+      lastCard = null;
+      updateCountOutput();
+    }
+
+    function undoCount() {
+      if (lastCard !== null) {
+        runningCount -= getHiLo(lastCard);
+        lastCard = null;
+        updateCountOutput();
+      }
+    }
+
+    function updateCountOutput() {
       const decks = parseFloat(document.getElementById('decksRemaining').value);
       const trueCount = decks > 0 ? (runningCount / decks).toFixed(2) : 'N/A';
-
       document.getElementById('countOutput').innerText =
         `Running Count: ${runningCount} | True Count: ${trueCount}`;
     }
