@@ -7,13 +7,14 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #0b0b0b;
+      background-color: #121212;
       color: #f0f0f0;
       text-align: center;
       padding: 2rem;
     }
     h1 {
       margin-bottom: 1rem;
+      color: #00ffe0;
     }
     .container {
       display: flex;
@@ -26,6 +27,11 @@
       padding: 1.5rem;
       border-radius: 10px;
       width: 300px;
+      box-shadow: 0 0 10px #00ffe0;
+      transition: transform 0.2s ease;
+    }
+    .card-inputs:hover, .counting:hover {
+      transform: scale(1.01);
     }
     .button-grid {
       display: grid;
@@ -42,13 +48,16 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 1rem;
+      transition: background-color 0.2s ease, transform 0.2s ease;
     }
     .card-button:hover {
       background-color: #555;
+      transform: scale(1.05);
     }
     .card-button.selected {
-      background-color: #007acc;
-      border-color: #00bfff;
+      background-color: #00bfff;
+      border-color: #00ffe0;
+      color: black;
     }
     input, button {
       margin: 0.5rem 0;
@@ -93,7 +102,7 @@
     let runningCount = 0;
     let selectedPlayer = null;
     let selectedDealer = null;
-    let lastCard = null;
+    let cardHistory = [];
 
     const playerButtons = document.getElementById('playerButtons');
     const dealerButtons = document.getElementById('dealerButtons');
@@ -104,7 +113,7 @@
     function highlightSelected(group, value) {
       const buttons = group.getElementsByClassName('card-button');
       for (const btn of buttons) {
-        if (btn.innerText == value) btn.classList.add('selected');
+        if (btn.innerText === value.toString()) btn.classList.add('selected');
         else btn.classList.remove('selected');
       }
     }
@@ -169,20 +178,20 @@
     function updateCountWithCard(card) {
       const value = getHiLo(card);
       runningCount += value;
-      lastCard = card;
+      cardHistory.push(card);
       updateCountOutput();
     }
 
     function resetCount() {
       runningCount = 0;
-      lastCard = null;
+      cardHistory = [];
       updateCountOutput();
     }
 
     function undoCount() {
-      if (lastCard !== null) {
-        runningCount -= getHiLo(lastCard);
-        lastCard = null;
+      const last = cardHistory.pop();
+      if (last !== undefined) {
+        runningCount -= getHiLo(last);
         updateCountOutput();
       }
     }
