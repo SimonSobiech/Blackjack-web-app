@@ -73,7 +73,7 @@
   <h1>Blackjack Strategy + Card Counter</h1>
 
   <div class="icon-key" style="margin-bottom: 2rem; font-size: 0.9rem;">
-    <p><strong>Card Icons:</strong> J = 🃏♠️, Q = 👑♥️, K = 🤴♦️, A = 🅰️♣️</p>
+    <p><strong>Card Icons:</strong> J, Q, K, A</p>
     <label for="themeSelect">Theme:</label>
     <select id="themeSelect" onchange="switchTheme()">
       <option value="dark">Dark</option>
@@ -104,13 +104,22 @@
     </div>
   </div>
 
+  <div class="strategy-table" style="margin-top: 2rem; overflow-x: auto;">
+    <h2>Strategy Table</h2>
+    <p><strong>Legend:</strong> <span style="color:#ff6666">H</span> = Hit, <span style="color:#66cc66">S</span> = Stand, <span style="color:#66b3ff">D</span> = Double</p>
+    <table border="1" style="margin: 0 auto; border-collapse: collapse; min-width: 600px;">
+      <thead>
+        <tr>
+          <th>\\</th>
+          <th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th>
+        </tr>
+      </thead>
+      <tbody id="strategyGrid"></tbody>
+    </table>
+  </div>
+
   <script>
-    const iconMap = {
-      'J': '🃏♠️',
-      'Q': '👑♥️',
-      'K': '🤴♦️',
-      'A': '🅰️♣️'
-    };
+    const iconMap = { 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A' };
 
     let runningCount = 0;
     let selectedPlayer = null;
@@ -176,6 +185,7 @@
         document.getElementById('strategyOutput').innerText = 'Select both hand and dealer card.';
         return;
       }
+
       let move = 'Hit';
       if (selectedPlayer >= 17) move = 'Stand';
       else if (selectedPlayer >= 13 && selectedDealer <= 6) move = 'Stand';
@@ -228,6 +238,45 @@
         document.body.style.backgroundColor = '#121212';
         document.body.style.color = '#f0f0f0';
       }
+    }
+
+    const basicStrategy = {
+      8: ['H','H','H','H','H','H','H','H','H','H'],
+      9: ['H','D','D','D','D','H','H','H','H','H'],
+      10: ['D','D','D','D','D','D','D','D','H','H'],
+      11: ['D','D','D','D','D','D','D','D','D','H'],
+      12: ['H','H','S','S','S','H','H','H','H','H'],
+      13: ['S','S','S','S','S','H','H','H','H','H'],
+      14: ['S','S','S','S','S','H','H','H','H','H'],
+      15: ['S','S','S','S','S','H','H','H','S','H'],
+      16: ['S','S','S','S','S','H','H','S','S','H'],
+      17: ['S','S','S','S','S','S','S','S','S','S'],
+    };
+
+    const gridBody = document.getElementById('strategyGrid');
+    const dealerCards = [2,3,4,5,6,7,8,9,10,11];
+
+    for (let player = 8; player <= 17; player++) {
+      const row = document.createElement('tr');
+      const header = document.createElement('th');
+      header.innerText = player;
+      row.appendChild(header);
+
+      basicStrategy[player].forEach((move, i) => {
+        const cell = document.createElement('td');
+        cell.innerText = move;
+        if (move === 'H') cell.style.backgroundColor = '#ff6666';
+        if (move === 'S') cell.style.backgroundColor = '#66cc66';
+        if (move === 'D') cell.style.backgroundColor = '#66b3ff';
+        cell.style.cursor = 'pointer';
+        cell.style.padding = '0.5rem';
+        cell.onclick = () => {
+          document.getElementById('strategyOutput').innerText = `Hand ${player} vs Dealer ${dealerCards[i]}: ${move}`;
+        };
+        row.appendChild(cell);
+      });
+
+      gridBody.appendChild(row);
     }
   </script>
 </body>
