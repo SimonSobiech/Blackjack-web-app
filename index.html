@@ -4,280 +4,115 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Blackjack Strategy + Card Counter</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: #f0f0f0;
-      text-align: center;
-      padding: 2rem;
-    }
-    h1 {
-      margin-bottom: 1rem;
-      color: #00ffe0;
-    }
-    .container {
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 2rem;
-    }
-    .card-inputs, .counting {
-      background-color: #1e1e1e;
-      padding: 1.5rem;
-      border-radius: 10px;
-      width: 300px;
-      box-shadow: 0 0 10px #00ffe0;
-    }
-    .button-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 0.4rem;
-      justify-items: center;
-    }
-    .card-button {
-      background-color: #333;
-      border: 1px solid #555;
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background-color 0.2s ease, transform 0.2s ease;
-    }
-    .card-button:hover {
-      background-color: #555;
-      transform: scale(1.05);
-    }
-    .card-button.selected {
-      background-color: #00bfff;
-      border-color: #00ffe0;
-      color: black;
-    }
-    input, button {
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      width: 90%;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-    }
-    .output {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-  </style>
 </head>
 <body>
-  <h1>Blackjack Strategy + Card Counter</h1>
+  <!-- HTML content is stored in the canvas and inserted here -->
+  <!-- Extracted strategy table and script content follows -->
+<div class="strategy-table" style="margin-top: 2rem; overflow-x: auto;">
+  <h2>Strategy Table - Hard Totals</h2>
+  <table border="1" style="margin: 0 auto; border-collapse: collapse; min-width: 600px;">
+    <thead>
+      <tr>
+        <th>\</th>
+        <th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th>
+      </tr>
+    </thead>
+    <tbody id="strategyGrid"></tbody>
+  </table>
 
-  <div class="icon-key" style="margin-bottom: 2rem; font-size: 0.9rem;">
-    <p><strong>Card Icons:</strong> J, Q, K, A</p>
-    <label for="themeSelect">Theme:</label>
-    <select id="themeSelect" onchange="switchTheme()">
-      <option value="dark">Dark</option>
-      <option value="light">Light</option>
-    </select>
-  </div>
+  <h2 style="margin-top: 2rem;">Strategy Table - Soft Totals</h2>
+  <table border="1" style="margin: 0 auto; border-collapse: collapse; min-width: 600px;">
+    <thead>
+      <tr>
+        <th>\</th>
+        <th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th>
+      </tr>
+    </thead>
+    <tbody id="softGrid"></tbody>
+  </table>
 
-  <div class="container">
-    <div class="card-inputs">
-      <h2>Basic Strategy</h2>
-      <p>Select your hand total:</p>
-      <div class="button-grid" id="playerButtons"></div>
-      <p>Select dealer's card:</p>
-      <div class="button-grid" id="dealerButtons"></div>
-      <button onclick="getStrategy()">Get Move</button>
-      <div class="output" id="strategyOutput"></div>
-    </div>
+  <h2 style="margin-top: 2rem;">Strategy Table - Pairs</h2>
+  <table border="1" style="margin: 0 auto; border-collapse: collapse; min-width: 600px;">
+    <thead>
+      <tr>
+        <th>\</th>
+        <th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th>
+      </tr>
+    </thead>
+    <tbody id="pairGrid"></tbody>
+  </table>
+</div>
 
-    <div class="counting">
-      <h2>Card Counting</h2>
-      <p>Select a card that was seen:</p>
-      <div class="button-grid" id="countButtons"></div>
-      <label>Decks Remaining:</label>
-      <input type="number" id="decksRemaining" value="6" min="0.5" step="0.5">
-      <button onclick="resetCount()">Reset Count</button>
-      <button onclick="undoCount()">Undo Last Card</button>
-      <div class="output" id="countOutput"></div>
-    </div>
-  </div>
+<script>
+  const hardStrategy = {
+    8: ['H','H','H','H','H','H','H','H','H','H'],
+    9: ['H','D','D','D','D','H','H','H','H','H'],
+    10: ['D','D','D','D','D','D','D','D','H','H'],
+    11: ['D','D','D','D','D','D','D','D','D','H'],
+    12: ['H','H','S','S','S','H','H','H','H','H'],
+    13: ['S','S','S','S','S','H','H','H','H','H'],
+    14: ['S','S','S','S','S','H','H','H','H','H'],
+    15: ['S','S','S','S','S','H','H','H','S','H'],
+    16: ['S','S','S','S','S','H','H','S','S','H'],
+    17: ['S','S','S','S','S','S','S','S','S','S']
+  };
 
-  <div class="strategy-table" style="margin-top: 2rem; overflow-x: auto;">
-    <h2>Strategy Table</h2>
-    <p><strong>Legend:</strong> <span style="color:#ff6666">H</span> = Hit, <span style="color:#66cc66">S</span> = Stand, <span style="color:#66b3ff">D</span> = Double</p>
-    <table border="1" style="margin: 0 auto; border-collapse: collapse; min-width: 600px;">
-      <thead>
-        <tr>
-          <th>\\</th>
-          <th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th>
-        </tr>
-      </thead>
-      <tbody id="strategyGrid"></tbody>
-    </table>
-  </div>
+  const softStrategy = {
+    13: ['H','H','D','D','D','H','H','H','H','H'],
+    14: ['H','H','D','D','D','H','H','H','H','H'],
+    15: ['H','H','D','D','D','H','H','H','H','H'],
+    16: ['H','H','D','D','D','H','H','H','H','H'],
+    17: ['H','D','D','D','D','H','H','H','H','H'],
+    18: ['S','D','D','D','D','S','S','H','H','H'],
+    19: ['S','S','S','S','D','S','S','S','S','S'],
+    20: ['S','S','S','S','S','S','S','S','S','S']
+  };
 
-  <script>
-    const iconMap = { 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A' };
+  const pairStrategy = {
+    'A,A': ['P','P','P','P','P','P','P','P','P','P'],
+    '10,10': ['S','S','S','S','S','S','S','S','S','S'],
+    '9,9': ['P','P','P','P','P','S','P','P','S','S'],
+    '8,8': ['P','P','P','P','P','P','P','P','P','P'],
+    '7,7': ['P','P','P','P','P','P','H','H','H','H'],
+    '6,6': ['P','P','P','P','P','H','H','H','H','H'],
+    '5,5': ['D','D','D','D','D','D','D','D','H','H'],
+    '4,4': ['H','H','H','P','P','H','H','H','H','H'],
+    '3,3': ['P','P','P','P','P','P','H','H','H','H'],
+    '2,2': ['P','P','P','P','P','P','H','H','H','H']
+  };
 
-    let runningCount = 0;
-    let selectedPlayer = null;
-    let selectedDealer = null;
-    let cardHistory = [];
-
-    const playerButtons = document.getElementById('playerButtons');
-    const dealerButtons = document.getElementById('dealerButtons');
-    const countButtons = document.getElementById('countButtons');
-    const allCardValues = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A'];
-
-    function highlightSelected(group, value) {
-      const buttons = group.getElementsByClassName('card-button');
-      for (const btn of buttons) {
-        if (btn.getAttribute('data-value') === value.toString()) btn.classList.add('selected');
-        else btn.classList.remove('selected');
-      }
-    }
-
-    for (let i = 4; i <= 21; i++) {
-      const btn = document.createElement('button');
-      btn.innerText = i;
-      btn.setAttribute('data-value', i);
-      btn.className = 'card-button';
-      btn.onclick = () => {
-        selectedPlayer = i;
-        highlightSelected(playerButtons, i);
-      };
-      playerButtons.appendChild(btn);
-    }
-
-    allCardValues.forEach(card => {
-      const label = iconMap[card] || card;
-      const btn = document.createElement('button');
-      btn.innerText = label;
-      btn.setAttribute('data-value', card);
-      btn.className = 'card-button';
-      btn.onclick = () => {
-        selectedDealer = convertCardToValue(card);
-        highlightSelected(dealerButtons, card);
-      };
-      dealerButtons.appendChild(btn);
-    });
-
-    allCardValues.forEach(card => {
-      const label = iconMap[card] || card;
-      const btn = document.createElement('button');
-      btn.innerText = label;
-      btn.setAttribute('data-value', card);
-      btn.className = 'card-button';
-      btn.onclick = () => updateCountWithCard(card);
-      countButtons.appendChild(btn);
-    });
-
-    function convertCardToValue(card) {
-      if (['J', 'Q', 'K'].includes(card)) return 10;
-      if (card === 'A') return 11;
-      return parseInt(card);
-    }
-
-    function getStrategy() {
-      if (!selectedPlayer || !selectedDealer) {
-        document.getElementById('strategyOutput').innerText = 'Select both hand and dealer card.';
-        return;
-      }
-
-      let move = 'Hit';
-      if (selectedPlayer >= 17) move = 'Stand';
-      else if (selectedPlayer >= 13 && selectedDealer <= 6) move = 'Stand';
-      else if (selectedPlayer === 11) move = 'Double if allowed';
-
-      document.getElementById('strategyOutput').innerText = `Recommended Move: ${move}`;
-    }
-
-    function getHiLo(card) {
-      const value = convertCardToValue(card);
-      if (value >= 2 && value <= 6) return 1;
-      else if (value >= 10 || card === 'A') return -1;
-      return 0;
-    }
-
-    function updateCountWithCard(card) {
-      const value = getHiLo(card);
-      runningCount += value;
-      cardHistory.push(card);
-      updateCountOutput();
-    }
-
-    function resetCount() {
-      runningCount = 0;
-      cardHistory = [];
-      updateCountOutput();
-    }
-
-    function undoCount() {
-      const last = cardHistory.pop();
-      if (last !== undefined) {
-        runningCount -= getHiLo(last);
-        updateCountOutput();
-      }
-    }
-
-    function updateCountOutput() {
-      const decks = parseFloat(document.getElementById('decksRemaining').value);
-      const trueCount = decks > 0 ? (runningCount / decks).toFixed(2) : 'N/A';
-      document.getElementById('countOutput').innerText =
-        `Running Count: ${runningCount} | True Count: ${trueCount}`;
-    }
-
-    function switchTheme() {
-      const theme = document.getElementById('themeSelect').value;
-      if (theme === 'light') {
-        document.body.style.backgroundColor = '#ffffff';
-        document.body.style.color = '#000000';
-      } else {
-        document.body.style.backgroundColor = '#121212';
-        document.body.style.color = '#f0f0f0';
-      }
-    }
-
-    const basicStrategy = {
-      8: ['H','H','H','H','H','H','H','H','H','H'],
-      9: ['H','D','D','D','D','H','H','H','H','H'],
-      10: ['D','D','D','D','D','D','D','D','H','H'],
-      11: ['D','D','D','D','D','D','D','D','D','H'],
-      12: ['H','H','S','S','S','H','H','H','H','H'],
-      13: ['S','S','S','S','S','H','H','H','H','H'],
-      14: ['S','S','S','S','S','H','H','H','H','H'],
-      15: ['S','S','S','S','S','H','H','H','S','H'],
-      16: ['S','S','S','S','S','H','H','S','S','H'],
-      17: ['S','S','S','S','S','S','S','S','S','S'],
-    };
-
-    const gridBody = document.getElementById('strategyGrid');
+  function fillTable(gridId, strategyData, labelFunc) {
+    const grid = document.getElementById(gridId);
     const dealerCards = [2,3,4,5,6,7,8,9,10,11];
 
-    for (let player = 8; player <= 17; player++) {
+    for (let key in strategyData) {
       const row = document.createElement('tr');
       const header = document.createElement('th');
-      header.innerText = player;
+      header.innerText = labelFunc ? labelFunc(key) : key;
       row.appendChild(header);
 
-      basicStrategy[player].forEach((move, i) => {
+      strategyData[key].forEach((move, i) => {
         const cell = document.createElement('td');
         cell.innerText = move;
         if (move === 'H') cell.style.backgroundColor = '#ff6666';
         if (move === 'S') cell.style.backgroundColor = '#66cc66';
         if (move === 'D') cell.style.backgroundColor = '#66b3ff';
+        if (move === 'P') cell.style.backgroundColor = '#ffff66';
         cell.style.cursor = 'pointer';
         cell.style.padding = '0.5rem';
         cell.onclick = () => {
-          document.getElementById('strategyOutput').innerText = `Hand ${player} vs Dealer ${dealerCards[i]}: ${move}`;
+          document.getElementById('strategyOutput').innerText = `${key} vs Dealer ${dealerCards[i]}: ${move}`;
         };
         row.appendChild(cell);
       });
 
-      gridBody.appendChild(row);
+      grid.appendChild(row);
     }
-  </script>
+  }
+
+  fillTable('strategyGrid', hardStrategy);
+  fillTable('softGrid', softStrategy, k => 'A,' + (parseInt(k) - 11));
+  fillTable('pairGrid', pairStrategy);
+</script>
 </body>
 </html>
